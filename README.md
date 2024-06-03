@@ -1,0 +1,1 @@
+move all the content to documents folder
