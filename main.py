@@ -36,5 +36,5 @@ def rag_url_agent(query: str):
 
 if __name__ == '__main__':
     # query = "What does television fueled inventors to invent? "
-    query = "Who are the instructors and what are their emails? "
+    query = "What are the names and emails for all the instructors of this course? "
     rag_url_agent(query)

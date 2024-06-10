@@ -6,7 +6,7 @@ from langchain_community.document_loaders import WebBaseLoader, PyPDFLoader
 from langchain_openai import OpenAIEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
-from .utils import get_website_name
+from .utils import get_website_name, clean_up_string
 
 os.environ["LANGCHAIN_TRACING_V2"] = "true"
 os.environ["LANGCHAIN_API_KEY"] = "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"
@@ -16,15 +16,15 @@ os.environ["TAVILY_API_KEY"] = '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'
 def create_retriever(path: str, document_type: str):
     if document_type.lower() == "pdf":
         loader = PyPDFLoader(path, extract_images=True)
-        file_name = os.path.basename(path)
-        tool_name = f"retriever_for_{file_name}"
-        tool_description = f"queries the pdf `{file_name}` for relevant information"
+        file_name = clean_up_string(os.path.basename(path))
+        tool_name = f"retriever_for_document_{file_name}"
+        tool_description = f"queries the pdf `{file_name}.pdf` for relevant information"
 
     elif document_type.lower() == "url":
         loader = WebBaseLoader(
                 web_paths=(path,),
                 )
-        website_name = get_website_name(path)
+        website_name = clean_up_string(get_website_name(path))
         tool_name = f"retriever_for_{website_name}"
         tool_description = f"queries the website `{website_name}` for relevant information"
 
@@ -32,10 +32,10 @@ def create_retriever(path: str, document_type: str):
         raise NotImplementedError
 
     docs = loader.load()
-    text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=0) # make sure <= 1024 tokens, could find alternatives
+    text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=10) # make sure <= 1024 tokens, could find alternatives
     splits = text_splitter.split_documents(docs)
     vectorstore = Chroma.from_documents(documents=splits, embedding=OpenAIEmbeddings())
-    retriever = vectorstore.as_retriever(search_type="mmr", search_kwargs={"k": 6})
+    retriever = vectorstore.as_retriever(search_type="mmr", search_kwargs={"k": 10})
 
     tool = create_retriever_tool(
         retriever,
